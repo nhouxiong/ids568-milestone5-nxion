@@ -1,0 +1,50 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Data files (too large for git)
+data/
+output_local/
+output_dist/
+*.parquet
+*.csv
+*.json
+out_local/
+out_dist/
+test_data/
+test_output/
+run1/
+run2/
+
+# Spark/Java
+derby.log
+metastore_db/
+spark-warehouse/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs
+*.log
+logs/
+```
+
+---
