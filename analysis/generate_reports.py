@@ -116,7 +116,7 @@ def load_data() -> Dict[str, Any]:
             data[name] = json.loads(p.read_text())
     if data:
         return data
-    print("  No benchmark results found — using simulated data.")
+    print("  No benchmark results found - using simulated data.")
     return simulate_data()
 
 
@@ -195,7 +195,7 @@ def chart_cache_comparison(data: Dict) -> Path:
     bars2 = ax.bar(x + width / 2, p95s, width, label="p95 latency", color="#C44E52", alpha=0.8)
 
     ax.set_ylabel("Latency (ms)")
-    ax.set_title(f"Cache Impact — {cache.get('speedup_x', '?')}× speedup")
+    ax.set_title(f"Cache Impact - {cache.get('speedup_x', '?')}x speedup")
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     ax.legend()
@@ -320,13 +320,14 @@ class Report(FPDF):
 
     def body(self, text: str):
         self.set_font("Helvetica", size=10)
+        self.set_x(self.l_margin)
         self.multi_cell(0, 5.5, text)
         self.ln(2)
 
     def bullet(self, text: str):
         self.set_font("Helvetica", size=10)
         self.set_x(14)
-        self.multi_cell(0, 5.5, f"\u2022  {text}")
+        self.multi_cell(0, 5.5, f"-  {text}")
 
     def kv(self, label: str, value: str):
         self.set_font("Helvetica", "B", 10)
@@ -362,7 +363,7 @@ class Report(FPDF):
 
 
 def build_performance_report(data: Dict, charts: Dict[str, Path]) -> Path:
-    pdf = Report("LLM Inference Optimization — Performance Analysis Report")
+    pdf = Report("LLM Inference Optimization - Performance Analysis Report")
     pdf.add_page()
 
     # --- Overview ---
@@ -385,7 +386,7 @@ def build_performance_report(data: Dict, charts: Dict[str, Path]) -> Path:
         "this overhead is paid in full. When N requests are batched together, the "
         "weight-load cost is amortized: the matrix multiplications for all N prompts "
         "execute in parallel using the same weights, so per-request GPU time drops "
-        "roughly as O(1) rather than O(N). The practical limit is GPU VRAM — once "
+        "roughly as O(1) rather than O(N). The practical limit is GPU VRAM - once "
         "the combined KV-cache for the batch exceeds available memory, batch size "
         "must shrink."
     )
@@ -394,7 +395,7 @@ def build_performance_report(data: Dict, charts: Dict[str, Path]) -> Path:
         "Deterministic inference (temperature=0) produces the same output for the "
         "same prompt every time. The server stores responses keyed by a SHA-256 hash "
         "of the prompt (normalized to lowercase, stripped whitespace). A cache hit "
-        "requires only a hash lookup — O(1) memory access — completely bypassing the "
+        "requires only a hash lookup - O(1) memory access - completely bypassing the "
         "model. This reduces latency by several orders of magnitude for repeated "
         "queries and eliminates all compute for those requests."
     )
@@ -450,7 +451,7 @@ def build_performance_report(data: Dict, charts: Dict[str, Path]) -> Path:
         warm = cache.get("warm", {})
         pdf.kv("Cold-cache mean latency", f"{cache.get('cold', {}).get('mean_ms', 'N/A')} ms")
         pdf.kv("Warm-cache mean latency", f"{warm.get('mean_ms', 'N/A')} ms")
-        pdf.kv("Speedup", f"{speedup}×")
+        pdf.kv("Speedup", f"{speedup}x")
         pdf.kv("Hit rate (warm pass)", f"{warm.get('hit_rate', 0):.0%}")
     pdf.image_full(charts.get("cache_comparison", ""), caption="Figure 3. Cold vs warm cache latency (log scale).")
     pdf.image_full(charts.get("cache_hitrate", ""), caption="Figure 4. Cache hit-rate accumulation and per-request latency.")
@@ -472,7 +473,7 @@ def build_performance_report(data: Dict, charts: Dict[str, Path]) -> Path:
     pdf.body(
         "A larger cache improves long-term hit rate but consumes more memory. "
         "For a vocabulary of ~10,000 unique queries each response occupies on "
-        "average ~500 bytes, so a 10,000-entry cache requires ~5 MB — "
+        "average ~500 bytes, so a 10,000-entry cache requires ~5 MB - "
         "negligible compared to model weights. The LRU eviction policy (in-memory) "
         "ensures the most recently active queries stay resident."
     )
@@ -480,7 +481,7 @@ def build_performance_report(data: Dict, charts: Dict[str, Path]) -> Path:
     pdf.h2("6.3 Memory vs Speed")
     pdf.body(
         "Batching increases peak VRAM usage linearly with batch size. A batch of 8 "
-        "requires 8× the KV-cache memory of a single request. On a 16 GB GPU this "
+        "requires 8x the KV-cache memory of a single request. On a 16 GB GPU this "
         "is still comfortable for GPT-2 (117 M params, ~0.5 GB weights), but for "
         "7B-parameter models batch sizes above 4 may require mixed-precision or "
         "paged attention (as implemented by vLLM) to remain within budget."
@@ -495,7 +496,7 @@ def build_performance_report(data: Dict, charts: Dict[str, Path]) -> Path:
         "that implements continuous batching and paged attention for higher throughput.",
         "Semantic caching: extend the cache to match semantically similar prompts "
         "using embedding cosine similarity, increasing effective hit rate.",
-        "Quantization: INT8/INT4 weights reduce VRAM by 2–4×, allowing larger "
+        "Quantization: INT8/INT4 weights reduce VRAM by 2-4x, allowing larger "
         "batch sizes and faster compute on the same hardware.",
         "Prefill-decode disaggregation: route prefill (prompt processing) and decode "
         "(token generation) to separate fleets tuned for each workload.",
@@ -514,7 +515,7 @@ def build_performance_report(data: Dict, charts: Dict[str, Path]) -> Path:
 
 
 def build_governance_memo(data: Dict) -> Path:
-    pdf = Report("LLM Inference Optimization — Governance Memo")
+    pdf = Report("LLM Inference Optimization - Governance Memo")
     pdf.add_page()
 
     pdf.set_font("Helvetica", "B", 13)
@@ -549,7 +550,7 @@ def build_governance_memo(data: Dict) -> Path:
         "on every cache entry. Recommended policy:"
     )
     pdf.bullet("General queries: TTL = 1 hour. Stale model outputs are refreshed daily.")
-    pdf.bullet("Factual / time-sensitive queries: TTL ≤ 15 minutes. Set via request "
+    pdf.bullet("Factual / time-sensitive queries: TTL <= 15 minutes. Set via request "
                "header or topic classifier.")
     pdf.bullet("Personal or session-scoped queries: TTL = 0 (disabled). Never cache "
                "queries containing pronouns or user-specific context.")
@@ -573,7 +574,7 @@ def build_governance_memo(data: Dict) -> Path:
             "Membership inference",
             "Timing side-channels reveal whether a prompt was previously "
             "submitted (cache hit is faster).",
-            "Add uniform random jitter (1–5 ms) to all responses; rate-limit "
+            "Add uniform random jitter (1-5 ms) to all responses; rate-limit "
             "timing-sensitive endpoints.",
         ),
         (
