@@ -9,8 +9,9 @@ from functools import lru_cache
 class Settings(BaseSettings):
     """Application settings with environment variable support."""
     
-    # Model settings
-    model_name: str = "meta-llama/Llama-2-7b-hf"
+    # Model settings — default to gpt2 (no auth, CPU-friendly)
+    # Override with LLM_MODEL_NAME env var for larger models
+    model_name: str = "gpt2"
     max_tokens: int = 256
     temperature: float = 0.0
     

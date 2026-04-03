@@ -22,7 +22,8 @@ cache = LLMCache(
 )
 batcher = DynamicBatcher(
     max_batch_size=settings.max_batch_size,
-    max_wait_ms=settings.batch_timeout_ms
+    max_wait_ms=settings.batch_timeout_ms,
+    inference_fn=model_manager.generate_batch,
 )
 
 @asynccontextmanager
@@ -73,5 +74,6 @@ async def metrics():
     """Expose performance metrics."""
     return {
         "cache": cache.get_stats(),
-        "batcher": batcher.get_stats()
+        "batcher": batcher.get_stats(),
+        "model": model_manager.get_memory_usage(),
     }

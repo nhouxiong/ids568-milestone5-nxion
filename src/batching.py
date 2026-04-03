@@ -5,7 +5,7 @@ Accumulates requests and processes them in batches to maximize
 GPU utilization while respecting latency constraints.
 """
 import asyncio
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional, Callable, Awaitable
 from dataclasses import dataclass, field
 import time
 
@@ -30,10 +30,14 @@ class DynamicBatcher:
     def __init__(
         self,
         max_batch_size: int = 8,
-        max_wait_ms: float = 50.0
+        max_wait_ms: float = 50.0,
+        inference_fn: Optional[
+            Callable[[List[InferenceRequest]], Awaitable[List[str]]]
+        ] = None,
     ):
         self.max_batch_size = max_batch_size
         self.max_wait_ms = max_wait_ms
+        self._inference_fn = inference_fn
         self.pending: List[PendingRequest] = []
         self.lock = asyncio.Lock()
         self._timeout_task: asyncio.Task = None
@@ -105,19 +109,22 @@ class DynamicBatcher:
         for req in batch:
             self._total_wait_times += (now - req.arrival_time) * 1000
         
-        # Run inference (placeholder - implement in inference.py)
-        prompts = [r.request.prompt for r in batch]
-        results = await self._run_inference(prompts)
+        # Run inference via injected function or placeholder
+        requests = [r.request for r in batch]
+        results = await self._run_inference(requests)
         
         # Resolve futures
         for pending, result in zip(batch, results):
             if not pending.future.done():
                 pending.future.set_result(result)
     
-    async def _run_inference(self, prompts: List[str]) -> List[str]:
-        """Override with actual model inference."""
-        await asyncio.sleep(0.1)  # Placeholder
-        return [f"Response to: {p[:30]}..." for p in prompts]
+    async def _run_inference(self, requests: List[InferenceRequest]) -> List[str]:
+        """Run inference via injected function, or a placeholder if none set."""
+        if self._inference_fn is not None:
+            return await self._inference_fn(requests)
+        # Placeholder — used in tests when no real model is available
+        await asyncio.sleep(0.05)
+        return [f"Response to: {r.prompt[:40]}..." for r in requests]
     
     def get_stats(self) -> Dict[str, Any]:
         """Return batching statistics."""
